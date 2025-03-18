@@ -1,3 +1,27 @@
+import streamlit as st
+st.set_page_config(page_title="ScoutAI Dashboard", layout="wide")
+import random
+import numpy as np
+import pandas as pd
+import os
+import json
+import matplotlib.pyplot as plt
+import openai
+from collections import deque
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import train_test_split, GridSearchCV, RandomizedSearchCV
+from sklearn.preprocessing import StandardScaler
+from sklearn.tree import plot_tree
+from sklearn.inspection import permutation_importance
+from sklearn.neural_network import MLPRegressor
+from sklearn.exceptions import NotFittedError
+from scipy.stats import norm
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import RBF, ConstantKernel
+from sklearn.linear_model import SGDClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import AdaBoostClassifier, VotingClassifier
+from joblib import Parallel, delayed
 import random
 import numpy as np
 import pandas as pd
