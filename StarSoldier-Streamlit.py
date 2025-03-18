@@ -49,6 +49,8 @@ class ChatBot:
     def __init__(self):
         self.api_key = "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"
 
+        openai.api_key = self.api_key
+
     def respond(self, query):
         if query.lower() in st.session_state.chat_memory:
             return st.session_state.chat_memory[query.lower()]
@@ -63,7 +65,7 @@ class ChatBot:
                 model="gpt-4",
                 messages=[{"role": "user", "content": query}]
             )
-            return response["choices"][0]["message"]["content"]
+            return response.choices[0].message.content
         except Exception as e:
             return f"Error calling OpenAI API: {str(e)}"
 
