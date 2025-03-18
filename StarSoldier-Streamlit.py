@@ -19,7 +19,6 @@ from sklearn.gaussian_process.kernels import RBF, ConstantKernel
 from sklearn.linear_model import SGDClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import AdaBoostClassifier, VotingClassifier
-from statsmodels.tsa.holtwinters import ExponentialSmoothing
 from joblib import Parallel, delayed
 
 # Use Streamlit session state for chatbot memory
