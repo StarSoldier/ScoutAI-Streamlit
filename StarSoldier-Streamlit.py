@@ -44,15 +44,21 @@ if "chat_memory" not in st.session_state:
 if "ai_training_data" not in st.session_state:
     st.session_state.ai_training_data = []
 
-# GPT-Driven Chatbot Class
+# GPT & LLaMA-Driven Chatbot Class
 class ChatBot:
     def __init__(self):
         self.gpt_pipeline = pipeline("text-generation", model="EleutherAI/gpt-neo-1.3B")
+        self.llama_pipeline = pipeline("text-generation", model="meta-llama/Llama-2-7b-chat-hf")
 
     def respond(self, query):
         if query.lower() in st.session_state.chat_memory:
             return st.session_state.chat_memory[query.lower()]
-        response = self.gpt_pipeline(query, max_length=50, do_sample=True)[0]['generated_text']
+        
+        if "complex" in query.lower():
+            response = self.llama_pipeline(query, max_length=100, do_sample=True)[0]['generated_text']
+        else:
+            response = self.gpt_pipeline(query, max_length=50, do_sample=True)[0]['generated_text']
+        
         return response
 
     def learn(self, query, response):
