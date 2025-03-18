@@ -47,8 +47,9 @@ if "ai_training_data" not in st.session_state:
 # GPT-Driven Chatbot Class
 class ChatBot:
     def __init__(self):
-        self.api_key = "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"
-
+        self.api_key = os.getenv("OPENAI_API_KEY")
+        if not self.api_key:
+            st.error("OpenAI API key is missing! Set it as an environment variable.")
         openai.api_key = self.api_key
 
     def respond(self, query):
@@ -61,7 +62,8 @@ class ChatBot:
         if not self.api_key:
             return "OpenAI API key is missing!"
         try:
-            response = openai.ChatCompletion.create(
+            client = openai.OpenAI()
+            response = client.chat.completions.create(
                 model="gpt-4",
                 messages=[{"role": "user", "content": query}]
             )
