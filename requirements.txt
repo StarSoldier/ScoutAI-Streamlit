@@ -3,4 +3,9 @@ scikit-learn
 statsmodels
 transformers
 torch
+openai
+streamlit
+scikit-learn
+pandas
+numpy
 
