@@ -35,12 +35,20 @@ def save_memory(memory):
     with open(MEMORY_FILE, "w") as f:
         json.dump(memory, f)
 
-# Placeholder class for Bayesian Optimization
-class MockBayesianOptimization:
-    def __init__(self, evaluation):
-        pass
-    def optimize(self):
-        return random.uniform(-0.05, 0.05)  # Dummy optimization
+class ChatBot:
+    def __init__(self):
+        self.memory = load_memory()
+    
+    def respond(self, query):
+        if query.lower() in self.memory:
+            return self.memory[query.lower()]
+        return "I am still learning. Ask me something else!"
+    
+    def learn(self, query, response):
+        self.memory[query.lower()] = response
+        save_memory(self.memory)
+
+chatbot = ChatBot()
 
 class ResourceTracker:
     def monitor_resources(self):
@@ -63,9 +71,6 @@ class PPOAgent:
         self.policy_model.fit(dummy_X, dummy_y)
         self.value_model.fit(dummy_X, dummy_y)
     
-    def remember(self, state, action, reward, next_state, done):
-        self.memory.append((state, action, reward, next_state, done))
-    
     def act(self, state):
         if random.random() < 0.1:
             return random.randint(0, self.action_dim - 1)
@@ -75,96 +80,51 @@ class PPOAgent:
         except NotFittedError:
             return random.randint(0, self.action_dim - 1)
         return np.argmax(action_probs)
-    
-    def train(self):
-        if len(self.memory) < self.batch_size:
-            return
-        batch = random.sample(self.memory, self.batch_size)
-        states, actions, rewards, next_states, dones = zip(*batch)
-        states = np.array(states)
-        next_states = np.array(next_states)
-        rewards = np.array(rewards)
-        dones = np.array(dones, dtype=np.float32)
-        
-        values = self.value_model.predict(states).flatten()
-        next_values = self.value_model.predict(next_states).flatten()
-        td_target = rewards + self.gamma * next_values * (1 - dones)
-        advantages = td_target - values
-        
-        self.policy_model.fit(states, advantages)
-        self.value_model.fit(states, td_target)
-
-class MentorAI:
-    def __init__(self):
-        self.kernel = ConstantKernel(1.0) * RBF()
-        self.gp = GaussianProcessRegressor(kernel=self.kernel, n_restarts_optimizer=5)
-        self.history = []
-    
-    def guide(self, method, evaluation):
-        optimizer = MockBayesianOptimization(evaluation)
-        adjustment = optimizer.optimize()
-        return evaluation["final_score"] + adjustment
 
 class ScoutAI:
     def __init__(self):
         self.memory = load_memory()
-        self.methods = {
-            "heuristic": self.method_heuristic,
-            "statistical": self.method_statistical,
-            "logical": self.method_logical,
-            "evidence_based": self.method_evidence_based,
-            "speculative": self.method_speculative,
-            "creative": self.method_creative,
-            "trend_based": self.method_trend_based,
-            "scenario_analysis": self.method_scenario_analysis
-        }
-        self.rl_agent = PPOAgent(state_dim=2, action_dim=len(self.methods))
-        self.mentor = MentorAI()
+        self.rl_agent = PPOAgent(state_dim=2, action_dim=8)
         self.resource_tracker = ResourceTracker()
-        self.performance_history = []
     
-    def method_heuristic(self, query): return f"Heuristic analysis of {query}"
-    def method_statistical(self, query): return f"Statistical evaluation of {query}"
-    def method_logical(self, query): return f"Logical reasoning applied to {query}"
-    def method_evidence_based(self, query): return f"Evidence-based assessment of {query}"
-    def method_speculative(self, query): return f"Speculative thinking on {query}"
-    def method_creative(self, query): return f"Creative problem-solving for {query}"
-    def method_trend_based(self, query): return f"Trend analysis of {query}"
-    def method_scenario_analysis(self, query): return f"Scenario planning for {query}"
-    
-    def explore_alternatives(self, query):
-        return {method_name: method(query) for method_name, method in self.methods.items()}
-    
-    def evaluate(self, alternatives):
-        evaluations = {}
-        for method, alternative in alternatives.items():
-            logic_score = random.uniform(0, 1)
-            risk_score = random.uniform(0, 0.5)
-            final_score = logic_score - risk_score
-            evaluations[method] = {
-                "alternative": alternative,
-                "logical_score": logic_score,
-                "risk_score": risk_score,
-                "final_score": final_score
-            }
-        save_memory(self.memory)
-        return evaluations
+    def analyze(self, query):
+        response = {
+            "heuristic": f"Heuristic analysis of {query}",
+            "statistical": f"Statistical evaluation of {query}",
+            "logical": f"Logical reasoning for {query}",
+            "evidence-based": f"Evidence-based assessment of {query}",
+            "speculative": f"Speculative thinking on {query}",
+            "creative": f"Creative problem-solving for {query}",
+            "trend-based": f"Trend analysis of {query}",
+            "scenario-analysis": f"Scenario planning for {query}"
+        }
+        return response
 
 def evaluate_ai(query):
     scout = ScoutAI()
-    alternatives = scout.explore_alternatives(query)
-    evaluations = scout.evaluate(alternatives)
-    return evaluations
+    return scout.analyze(query)
 
-def train_parallel():
-    scout = ScoutAI()
-    return scout.evaluate({"query": "Test scenario"})
-
-results = Parallel(n_jobs=-1)(delayed(train_parallel)() for _ in range(5))
-
+st.set_page_config(page_title="ScoutAI Dashboard", layout="wide")
 st.title("ScoutAI System")
-user_query = st.text_input("Enter your query:")
-if st.button("Evaluate"):
-    results = evaluate_ai(user_query)
-    st.write(results)
 
+col1, col2 = st.columns([2, 1])
+
+with col1:
+    user_query = st.text_input("Enter your query:")
+    if st.button("Evaluate"):
+        results = evaluate_ai(user_query)
+        st.json(results)
+
+with col2:
+    st.subheader("Chat with ScoutAI")
+    chat_input = st.text_input("Ask me anything:")
+    if st.button("Get Response"):
+        response = chatbot.respond(chat_input)
+        st.write(response)
+
+    learn_input = st.text_input("Teach me something (format: question=answer):")
+    if st.button("Teach AI"):
+        if "=" in learn_input:
+            question, answer = learn_input.split("=", 1)
+            chatbot.learn(question.strip(), answer.strip())
+            st.success("AI learned a new response!")
