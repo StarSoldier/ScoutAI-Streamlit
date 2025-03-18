@@ -2,9 +2,9 @@ import random
 import numpy as np
 import pandas as pd
 import os
+import json
 import matplotlib.pyplot as plt
 import streamlit as st
-import json
 from collections import deque
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split, GridSearchCV, RandomizedSearchCV
@@ -21,9 +21,24 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import AdaBoostClassifier, VotingClassifier
 from joblib import Parallel, delayed
 
+# Permanent memory file
+MEMORY_FILE = "ai_memory.json"
+
+# Load existing memory
+def load_memory():
+    if os.path.exists(MEMORY_FILE):
+        with open(MEMORY_FILE, "r") as f:
+            return json.load(f)
+    return {}
+
+# Save memory to file
+def save_memory(memory):
+    with open(MEMORY_FILE, "w") as f:
+        json.dump(memory, f, indent=4)
+
 # Use Streamlit session state for chatbot memory
 if "chat_memory" not in st.session_state:
-    st.session_state.chat_memory = {}
+    st.session_state.chat_memory = load_memory()
 
 if "ai_training_data" not in st.session_state:
     st.session_state.ai_training_data = []
@@ -37,6 +52,7 @@ class ChatBot:
     def learn(self, query, response):
         st.session_state.chat_memory[query.lower()] = response
         st.session_state.ai_training_data.append((query.lower(), response))
+        save_memory(st.session_state.chat_memory)
         st.success("AI learned a new response!")
 
 chatbot = ChatBot()
@@ -78,6 +94,7 @@ class PPOAgent:
             y = [item[1] for item in st.session_state.ai_training_data]
             self.policy_model.fit(X, y)
             self.value_model.fit(X, y)
+            save_memory(st.session_state.chat_memory)
             st.success("AI has been retrained on new data!")
 
 class ScoutAI:
