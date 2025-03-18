@@ -5,6 +5,7 @@ import os
 import json
 import matplotlib.pyplot as plt
 import streamlit as st
+import openai
 from collections import deque
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split, GridSearchCV, RandomizedSearchCV
@@ -20,7 +21,6 @@ from sklearn.linear_model import SGDClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import AdaBoostClassifier, VotingClassifier
 from joblib import Parallel, delayed
-from transformers import pipeline
 
 # Permanent memory file
 MEMORY_FILE = "ai_memory.json"
@@ -44,22 +44,28 @@ if "chat_memory" not in st.session_state:
 if "ai_training_data" not in st.session_state:
     st.session_state.ai_training_data = []
 
-# GPT & LLaMA-Driven Chatbot Class
+# GPT-Driven Chatbot Class
 class ChatBot:
     def __init__(self):
-        self.gpt_pipeline = pipeline("text-generation", model="EleutherAI/gpt-neo-1.3B")
-        self.llama_pipeline = pipeline("text-generation", model="meta-llama/Llama-2-7b-chat-hf")
+        self.api_key = "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"
 
     def respond(self, query):
         if query.lower() in st.session_state.chat_memory:
             return st.session_state.chat_memory[query.lower()]
-        
-        if "complex" in query.lower():
-            response = self.llama_pipeline(query, max_length=100, do_sample=True)[0]['generated_text']
-        else:
-            response = self.gpt_pipeline(query, max_length=50, do_sample=True)[0]['generated_text']
-        
+        response = self.get_gpt_response(query)
         return response
+
+    def get_gpt_response(self, query):
+        if not self.api_key:
+            return "OpenAI API key is missing!"
+        try:
+            response = openai.ChatCompletion.create(
+                model="gpt-4",
+                messages=[{"role": "user", "content": query}]
+            )
+            return response["choices"][0]["message"]["content"]
+        except Exception as e:
+            return f"Error calling OpenAI API: {str(e)}"
 
     def learn(self, query, response):
         st.session_state.chat_memory[query.lower()] = response
@@ -72,6 +78,18 @@ chatbot = ChatBot()
 class ResourceTracker:
     def monitor_resources(self):
         return {"cpu_usage": random.uniform(10, 90), "memory_usage": random.uniform(1000, 8000)}
+
+class MentorAI:
+    def __init__(self):
+        self.validated_strategies = []
+
+    def evaluate_and_select(self, strategy, performance):
+        if performance > 0.8:
+            self.validated_strategies.append(strategy)
+        return strategy if strategy in self.validated_strategies else "fallback_strategy"
+
+    def reinforce_best_practices(self):
+        st.success("MentorAI reinforcing best-known strategies!")
 
 class PPOAgent:
     def __init__(self, state_dim, action_dim, gamma=0.99, lr=0.001, epsilon=0.2, batch_size=32, memory_size=10000):
@@ -112,6 +130,7 @@ class PPOAgent:
 class ScoutAI:
     def __init__(self):
         self.rl_agent = PPOAgent(state_dim=2, action_dim=8)
+        self.mentor_ai = MentorAI()
         self.resource_tracker = ResourceTracker()
     
     def analyze(self, query):
@@ -158,3 +177,4 @@ with col2:
 if st.button("Retrain AI"):
     scout = ScoutAI()
     scout.rl_agent.train_on_memory()
+    scout.mentor_ai.reinforce_best_practices()
