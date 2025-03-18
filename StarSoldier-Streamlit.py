@@ -3,40 +3,40 @@ import numpy as np
 import pandas as pd
 import os
 import json
-import openai
 import streamlit as st
 from transformers import pipeline
 from collections import deque
 from sklearn.neural_network import MLPRegressor
 from sklearn.exceptions import NotFittedError
 
-# Fil för att spara AI:s minne
+# Hugging Face API Token (Byt ut mot din egen)
+HUGGINGFACE_API_KEY = "DIN_API_NYCKEL"
+
+# Använd Hugging Face för att köra Llama 2
+llama_pipe = pipeline(
+    "text-generation",
+    model="meta-llama/Llama-2-7b-chat-hf",
+    use_auth_token=HUGGINGFACE_API_KEY
+)
+
+# AI:s minne
 MEMORY_FILE = "ai_memory.json"
 
-# Ladda kunskap
 def load_memory():
     if os.path.exists(MEMORY_FILE):
         with open(MEMORY_FILE, "r") as f:
             return json.load(f)
     return {}
 
-# Spara kunskap
 def save_memory(memory):
     with open(MEMORY_FILE, "w") as f:
         json.dump(memory, f, indent=4)
 
-# Initiera session state för AI-minne
 if "chat_memory" not in st.session_state:
     st.session_state.chat_memory = load_memory()
 
 if "ai_training_data" not in st.session_state:
     st.session_state.ai_training_data = []
-
-# Hugging Face Llama 2 pipeline
-llama_pipe = pipeline("text-generation", model="meta-llama/Llama-2-7b-chat-hf")
-
-# OpenAI API Key (ersätt med din egen)
-openai.api_key = "DIN_OPENAI_API_NYCKEL"
 
 class ChatBot:
     def respond(self, query, model_choice):
@@ -50,12 +50,6 @@ class ChatBot:
         elif model_choice == "Llama 2":
             response = llama_pipe(query, max_length=200, do_sample=True)
             return response[0]["generated_text"]
-
-        elif model_choice == "GPT":
-            response = openai.ChatCompletion.create(
-                model="gpt-4", messages=[{"role": "user", "content": query}]
-            )
-            return response["choices"][0]["message"]["content"]
 
     def learn(self, query, response):
         query = query.lower()
@@ -81,7 +75,7 @@ with col2:
     st.subheader("Chat with AI")
 
     # Välj AI-modell
-    model_choice = st.radio("Select AI Model:", ["ScoutAI", "Llama 2", "GPT"])
+    model_choice = st.radio("Select AI Model:", ["ScoutAI", "Llama 2"])
 
     chat_input = st.text_input("Ask me anything:")
     if st.button("Get Response"):
