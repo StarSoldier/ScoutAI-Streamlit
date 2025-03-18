@@ -1,5 +1,4 @@
-import streamlit as st
-st.set_page_config(page_title="ScoutAI Dashboard", layout="wide")
+import streamlit as st.set_page_config(page_title="ScoutAI Dashboard", layout="wide")
 import random
 import numpy as np
 import pandas as pd
