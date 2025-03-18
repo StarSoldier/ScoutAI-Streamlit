@@ -26,6 +26,9 @@ from joblib import Parallel, delayed
 if "chat_memory" not in st.session_state:
     st.session_state.chat_memory = {}
 
+if "ai_training_data" not in st.session_state:
+    st.session_state.ai_training_data = []
+
 class ChatBot:
     def respond(self, query):
         if query.lower() in st.session_state.chat_memory:
@@ -34,6 +37,7 @@ class ChatBot:
 
     def learn(self, query, response):
         st.session_state.chat_memory[query.lower()] = response
+        st.session_state.ai_training_data.append((query.lower(), response))
         st.success("AI learned a new response!")
 
 chatbot = ChatBot()
@@ -68,6 +72,14 @@ class PPOAgent:
         except NotFittedError:
             return random.randint(0, self.action_dim - 1)
         return np.argmax(action_probs)
+
+    def train_on_memory(self):
+        if len(st.session_state.ai_training_data) > 10:
+            X = [item[0] for item in st.session_state.ai_training_data]
+            y = [item[1] for item in st.session_state.ai_training_data]
+            self.policy_model.fit(X, y)
+            self.value_model.fit(X, y)
+            st.success("AI has been retrained on new data!")
 
 class ScoutAI:
     def __init__(self):
@@ -114,3 +126,7 @@ with col2:
         if "=" in learn_input:
             question, answer = learn_input.split("=", 1)
             chatbot.learn(question.strip(), answer.strip())
+
+if st.button("Retrain AI"):
+    scout = ScoutAI()
+    scout.rl_agent.train_on_memory()
